@@ -58,7 +58,9 @@
             </li>
         {{/if}}
         <li class="navUser-item navUser-item--account">
+
             {{#if customer}}
+            <span> {{customer.name}}</span> 
                 <a class="navUser-action"
                    href="{{urls.account.index}}"
                    aria-label="{{lang 'common.account'}}"

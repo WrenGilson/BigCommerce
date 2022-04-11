@@ -29,7 +29,9 @@ export default class Category extends CatalogPage {
 
     onReady() {
         this.arrangeFocusOnSortBy();
-
+        // $('[data-button-type="add_all"]').on('click', event => {
+        //   console.log("submitty!");
+        // });
         $('[data-button-type="add-cart"]').on('click', (e) => this.setLiveRegionAttributes($(e.currentTarget).next(), 'status', 'polite'));
 
         this.makeShopByPriceFilterAccessible();
@@ -101,4 +103,6 @@ export default class Category extends CatalogPage {
             },
         });
     }
+
+
 }

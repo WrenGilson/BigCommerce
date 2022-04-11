@@ -49,6 +49,156 @@ category:
     {{/if}}
 
     <div class="page-content" id="product-listing-container">
+      <button data-button-type="add_all" id="addAll" onclick="add_all()" type="button">Add All To Cart</button>
+      <button id="removeAll" onclick="remove_all()" type="button" style="display:none;">Remove All Items In Cart</button>
+      <div style="background-color:red; color:white; width:250px;" id="alertUser"></div>
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+       <script>
+
+
+         $(document).ready(function () {
+            console.log("load");
+            checkCart();
+          });
+
+// CHECK IF ITEMS IN CART
+  function checkCart(){
+    fetch('/api/storefront/cart', {
+      credentials: 'include'
+    }).then(function(response) {
+      return response.json();
+    }).then(function(cartInfo) {
+      console.log(cartInfo[0].lineItems.physicalItems.length);
+      if(cartInfo[0].lineItems.physicalItems.length > 0){
+        document.getElementById("removeAll").style.display="inline";
+      }
+    }).catch(function() {
+          console.log("error");
+      });
+  }
+
+// REMOVE ALL ITEMS FROM CART
+
+                      function removeFromCart(removeUrl) {
+                             return $.ajax({
+                               url: removeUrl,
+                               type: 'DELETE',
+                               success: function(result) {
+                                 console.log("deleted");
+                               }
+                            });
+                        }
+
+                        //get data, pass to remove all handler
+                       function remove_all() {
+                         console.log("remove all");
+                         let cart_id = "{{cart_id}}";
+                         fetch('/api/storefront/cart', {
+                           credentials: 'include'
+                         }).then(function(response) {
+                           return response.json();
+                         }).then(function(cartInfo) {
+                           let all_items = cartInfo[0].lineItems.physicalItems;
+                           removeAllProducts(all_items);
+
+                         });
+                       }
+                       //async remove all from cart handler
+                        const removeAllProducts = async (all_items) => {
+                          let cart_id = "{{cart_id}}";
+                          for (i in all_items){
+                            console.log("removing " + all_items[i].name);
+                            let removeUrl = "/api/storefront/carts/" + cart_id + "/items/" + all_items[i].id;
+                            const remove_item = await removeFromCart(removeUrl);
+                            console.log("removed " + removeUrl);
+                          }
+                          let alertDiv = document.getElementById("alertUser");
+                          alertDiv.innerHTML = "Removed all items in cart.";
+                          location.reload();
+                        };
+
+// ADD ALL ITEMS IN CATEGORY TO CART
+               function getProductsByCategory() {
+               const graphQLUrl = "/graphql";
+               const thisUrl = window.location.pathname; //get the category
+               // Set up GraphQL query
+               // If specific product IDs were supplied, fetch them, else just get the first few products
+               const graphQLQuery = `
+                   query CategoryByUrl {
+                     site {
+                       route(path: "` + thisUrl + `") {
+                         node {
+                           id
+                           ... on Category {
+                             entityId
+                             products {
+                               edges {
+                                 node {
+                                   name
+                                   sku
+                                   }
+                                   }
+                                 }
+                               }
+                             }
+                           }
+                         }
+                       }
+                       `
+
+               // Fetch data from the GraphQL Storefront API
+               return fetch(graphQLUrl, {
+                       method: 'POST',
+                       credentials: 'include',
+                       mode: 'cors',
+                       headers: {
+                           'Content-Type': 'application/json',
+                           'Authorization': `Bearer {{settings.storefront_api.token}}`
+                       },
+                       body: JSON.stringify({
+                           query: graphQLQuery
+                       }),
+                   })
+                   .then(res => res.json())
+                   .then(res => res.data);
+           }
+           //async add items to cart
+          const addAllProducts = async (allprod) => {
+            for(a in allprod){
+              let addUrl = "/cart.php?action=add&sku=" + allprod[a].node.sku;
+              const addProd = await addToCart(addUrl);
+              console.log(`added ` + addUrl);
+            }
+            let alertDiv = document.getElementById("alertUser");
+            alertDiv.innerHTML = "Added all items in category.";
+            location.reload();
+          };
+          //run api call, call async
+                function add_all() {
+                 getProductsByCategory().then(alldata => {
+                   let allprod = alldata.site.route.node.products.edges;
+                   addAllProducts(allprod);
+
+                 });
+
+               };
+               //api call to add to cart
+               function addToCart(addUrl) {
+                  return $.get(addUrl)
+                .done(function(data, status, xhr) {
+                  console.log("totally done adding");
+                })
+                .fail(function(xhr, status, error) {
+                  return xhr.done();
+                })
+                .always(function() {
+                  return console.log("done");
+
+                });
+
+             }
+
+      </script>
         {{> components/category/product-listing}}
         {{{region name="category_below_content"}}}
     </div>

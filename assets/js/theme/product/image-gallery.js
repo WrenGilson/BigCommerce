@@ -8,6 +8,7 @@ export default class ImageGallery {
         this.currentImage = {};
     }
 
+
     init() {
         this.bindEvents();
         this.setImageZoom();
@@ -31,6 +32,8 @@ export default class ImageGallery {
         }
         this.setMainImage(imgObj);
     }
+
+
 
     restoreImage() {
         if (this.savedImage) {
@@ -114,4 +117,5 @@ export default class ImageGallery {
     bindEvents() {
         this.$selectableImages.on('click', this.selectNewImage.bind(this));
     }
+
 }
